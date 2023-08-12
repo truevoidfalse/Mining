@@ -1,0 +1,52 @@
+.Header__container
+    display: flex
+    width: 100vw
+    height: 8vh
+    flex-direction: row
+    justify-content: space-between
+    align-items: center
+    border-bottom: 1px solid rgb(45, 45, 45)
+    .__left
+        display: flex
+        flex-direction: column
+        margin-left: 10%
+        ._welcome
+            color: rgb(255, 255, 255)
+            font-size: 1.5rem
+            font-weight: bold
+        ._time
+            color: rgba(255, 255, 255, .5)
+    .__right
+        display: flex
+        flex-direction: row
+        align-items: center
+        margin-right: 10%
+        ._icon
+            width: 40px
+            height: 40px
+            background-color: rgb(45, 45, 45)
+            border-radius: 30%
+            &:first-child
+                margin-right: 60px
+            &:nth-child(2)
+                margin-right: 40px
+        .message
+            background: no-repeat url('../../assets/Message.svg')
+            background-size: cover
+        .notification
+            background: no-repeat url('../../assets/Notification-bing.svg')
+            background-size: cover
+        ._line
+            width: 2px
+            height: 35px
+            background-color: rgb(45, 45, 45)
+            margin-right: 40px
+        ._search
+            width: 350px
+            height: 40px
+            background-color: rgb(45, 45, 45)
+            border-radius: 5px
+            &[type=text]
+                font-size: 1.5rem
+                padding-left: 15px
+                
