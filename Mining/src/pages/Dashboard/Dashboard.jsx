@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import styles from './Dashboard.module.sass'
 
 
@@ -5,7 +6,29 @@ import styles from './Dashboard.module.sass'
 
 
 export const Dashboard = () => {
+    const socketRef = useRef()
+    const [etheur, setEtheur] = useState()
+    const [etheurColor, setEtheurColor] = useState(null)
 
+    useEffect(() => {
+        socketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/etheur@trade')
+        socketRef.current.onmessage = (event) => {
+            if (event.data) {
+                let response = JSON.parse(event.data)
+                let currentPrice = parseFloat(response.p).toFixed(2)
+                setEtheur(currentPrice)
+                console.log(currentPrice, etheur)
+                if (currentPrice > etheur) {
+                    setEtheurColor(true)
+                }
+                if (currentPrice < etheur) {
+                    setEtheurColor(false)
+                }
+            }
+        }
+    })
+
+    
 
     return (
         <main className={styles.main}>
@@ -14,7 +37,7 @@ export const Dashboard = () => {
                     <div className={styles.Area__container}>
                         <div>
                             <h2 className={styles._title}>Avarage Revenue</h2>
-                            <span className={styles._current_price}>$ 25,565</span>
+                            <span style={{color: etheurColor === true ? 'green' : 'red'}} className={styles._current_price}>${etheur}</span>
                             <div className={styles.diagram__status}>
                                 <span className={styles._status}>icon 20%</span>
                                 <span className={styles._old_price}>$20,452</span>
