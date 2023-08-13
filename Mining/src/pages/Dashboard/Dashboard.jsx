@@ -3,110 +3,84 @@ import styles from './Dashboard.module.sass'
 
 import React from 'react';
 import { faker } from '@faker-js/faker'
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Filler,
-    Legend,
-} from 'chart.js';
+
 import { Line } from 'react-chartjs-2';
+import { AreaLine } from '../../UI/AreaLine/AreaLine';
 
 
 
 
 export const Dashboard = () => {
-    const socketRef = useRef()
+
+    // WebSocketFetching
+    const EtheurSocketRef = useRef()
+    const BitcoinSocketRef = useRef()
+
+    // State for ChartJS graphs
     const [etheur, setEtheur] = useState()
     const [etheurColor, setEtheurColor] = useState(null)
     const [etheurData, setEtheurData] = useState([])
 
-    ChartJS.register(
-        CategoryScale,
-        LinearScale,
-        PointElement,
-        LineElement,
-        Title,
-        Tooltip,
-        Filler,
-        Legend
-    );
+    const [bitcoin, setBitcoin] = useState()
+    const [bitcoinColor, setBitcoinColor] = useState(null)
+    const [bitcoinData, setBitcoinData] = useState([])
 
-    const options = {
-        responsive: true,
-        scales: {
-            y: {
-                display: false,
-                grid: {
-                    display: false
-                }
-            },
-            x: {
-                ticks: {
-                    maxRotation: 0,
-                    minRotation: 0
-                },
-                grid: {
-                    display: false
-                }
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            },
-        },
-    };
+    
 
-    const data = {
-        labels: etheurData.map(el => el),
-        datasets: [
-            {
-                fill: true,
-                label: 'Dataset 2',
-                data: etheurData,
-                borderColor: 'rgba(0, 0, 0, 0)',
-                pointBackgroundColor: 'rgba(0, 0, 0, 0)',
-                backgroundColor: (context) => {
-                    const bgColor = [
-                        'rgba(253, 208, 46, 1)',
-                        'rgba(57, 64, 30, 1)',
-                    ]
-                    if (!context.chart.chartArea) {
-                        return
-                    }
-                    const { ctx, data, chartArea: { top, bottom } } = context.chart
-                    const gradientBg = ctx.createLinearGradient(0, top, 0, bottom)
-                    gradientBg.addColorStop(0, bgColor[0])
-                    gradientBg.addColorStop(1, bgColor[1])
-                    return gradientBg
-                },
-            },
-        ],
-    };
+    
+
+    
 
     useEffect(() => {
-        socketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/etheur@trade')
-        socketRef.current.onmessage = (event) => {
-            if (event.data) {
-                let response = JSON.parse(event.data)
-                let currentPrice = parseFloat(response.p).toFixed(2)
-                setEtheur(currentPrice)
-                if (currentPrice > etheur) {
-                    setEtheurColor(true)
+        const EtheurWebSocket = () => {
+            EtheurSocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/etheur@trade')
+            EtheurSocketRef.current.onmessage = (event) => {
+                if (event.data) {
+                    let response = JSON.parse(event.data)
+                    let currentPrice = parseFloat(response.p).toFixed(2)
+                    setEtheur(currentPrice)
+                    if (currentPrice > etheur) {
+                        setEtheurColor(true)
+                    }
+                    if (currentPrice < etheur) {
+                        setEtheurColor(false)
+                    }
+                    setEtheurData(prev => {
+                        if (prev.length >= 8) {
+                            return [...prev.slice(1), currentPrice]
+                        } else {
+                            return [...prev, currentPrice]
+                        }
+                    })
                 }
-                if (currentPrice < etheur) {
-                    setEtheurColor(false)
-                }
-                setEtheurData(prev => [...prev, currentPrice])
             }
         }
+        const BitcoinWebSocket = () => {
+            BitcoinSocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade')
+            BitcoinSocketRef.current.onmessage = (event) => {
+                if (event.data) {
+                    let response = JSON.parse(event.data)
+                    let currentPrice = parseFloat(response.p).toFixed(2)
+                    setBitcoin(currentPrice)
+                    if (currentPrice > bitcoin) {
+                        setBitcoinColor(true)
+                    }
+                    if (currentPrice < bitcoin) {
+                        setBitcoinColor(false)
+                    }
+                    setBitcoinData(prev => {
+                        if (prev.length >= 8) {
+                            return [...prev.slice(1), currentPrice]
+                        } else {
+                            return [...prev, currentPrice]
+                        }
+                    })
+                }
+            }
+        }
+        EtheurWebSocket()
+        BitcoinWebSocket()
     })
-    console.log(etheurData)
     
 
     return (
@@ -123,20 +97,20 @@ export const Dashboard = () => {
                             </div>
                         </div>
                         <div className={styles.diagram__container}>
-                            <Line options={options} data={data} />
+                            <AreaLine props={etheurData} />
                         </div>
                     </div>
                     <div className={styles.Area__container}>
                         <div>
-                            <h2 className={styles._title}>Customer Return</h2>
-                            <span className={styles._current_price}>7956</span>
+                            <h2 className={styles._title}>Avarage Revenue</h2>
+                            <span style={{ color: bitcoinColor === true ? 'green' : 'red' }} className={styles._current_price}>${bitcoin}</span>
                             <div className={styles.diagram__status}>
-                                <span className={styles._status}>icon 15%</span>
-                                <span className={styles._old_price}>6759</span>
+                                <span className={styles._status}>icon 20%</span>
+                                <span className={styles._old_price}>$20,452</span>
                             </div>
                         </div>
                         <div className={styles.diagram__container}>
-                            DIAGRAM
+                            <AreaLine props={bitcoinData} />
                         </div>
                     </div>
                 </section>
