@@ -3,9 +3,10 @@ import styles from './Dashboard.module.sass'
 
 import React from 'react';
 import { faker } from '@faker-js/faker'
+import axios from 'axios'
 
-import { Line } from 'react-chartjs-2';
 import { AreaLine } from '../../UI/AreaLine/AreaLine';
+import { PieLine } from '../../UI/PieLine/PieLine';
 
 
 
@@ -17,6 +18,10 @@ export const Dashboard = () => {
         ETHUSDT: [],
         BTCUSDT: []
     })
+    const [cryptoCount, setCryptoCount] = useState({
+        ETHUSDT: null,
+        BTCUSDT: null
+    })
     const [etheur, setEtheur] = useState(null)
     const [etheurColor, setEtheurColor] = useState(null)
 
@@ -25,11 +30,12 @@ export const Dashboard = () => {
 
     // WebSocketFetching
     const SocketRef = useRef()
-    SocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws')
+    
 
     const pairs = ['BTCUSDT', 'ETHUSDT']
     
     useEffect(() => {
+        SocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws')
         SocketRef.current.onopen = () => {
             pairs.forEach(pair => {
                 SocketRef.current.send(JSON.stringify({
@@ -66,7 +72,7 @@ export const Dashboard = () => {
                     }
                 }
                 setKlineData((prev) => {
-                    if (prev[`${response.s}`].length >= 8) {
+                    if (prev[`${response.s}`].length >= 20) {
                         return {
                             ...prev,
                             [`${response.s}`]: [...prev[`${response.s}`].slice(1), currentPrice]
@@ -80,7 +86,37 @@ export const Dashboard = () => {
                 }
                 )
             }
-        }
+
+            const cryptoBitcoinFecthing = async () => {
+                const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=BTCUSDT')
+                setCryptoCount((prev) => {
+                    return {
+                        ...prev,
+                        BTCUSDT: data.bids.reduce((total, bid) => {
+                            return parseFloat(total) + parseFloat(bid[1])
+                        })
+                    }
+                })
+
+            }
+            const cryptoEtheurFecthing = async () => {
+                const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=ETHUSDT')
+                setCryptoCount((prev) => {
+                    return {
+                        ...prev,
+                        ETHUSDT: data.bids.reduce((total, bid) => {
+                            return parseFloat(total) + parseFloat(bid[1])
+                        })
+                    }
+                })
+
+            }
+            cryptoBitcoinFecthing()
+            cryptoEtheurFecthing()
+            return () => {
+                SocketRef.current.close()
+            }
+        }  
     }, [
 
     ])
@@ -119,7 +155,7 @@ export const Dashboard = () => {
             </section>
             <section className={styles.right_side_section}>
                 <div className={styles.Area_pie__container}>
-
+                    <PieLine props={cryptoCount}/>
                 </div>
                 <div className={styles.Top_products__container}>
 
