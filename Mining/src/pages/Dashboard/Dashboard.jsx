@@ -12,32 +12,41 @@ import { AreaLine } from '../../UI/AreaLine/AreaLine';
 
 export const Dashboard = () => {
 
-    // WebSocketFetching
-    const EtheurSocketRef = useRef()
-    const BitcoinSocketRef = useRef()
-
     // State for ChartJS graphs
-    const [etheur, setEtheur] = useState()
+    const [klineData, setKlineData] = useState({
+        ETHUSDT: [],
+        BTCUSDT: []
+    })
+    const [etheur, setEtheur] = useState(null)
     const [etheurColor, setEtheurColor] = useState(null)
-    const [etheurData, setEtheurData] = useState([])
 
     const [bitcoin, setBitcoin] = useState()
     const [bitcoinColor, setBitcoinColor] = useState(null)
-    const [bitcoinData, setBitcoinData] = useState([])
 
+    // WebSocketFetching
+    const SocketRef = useRef()
+    SocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws')
+
+    const pairs = ['BTCUSDT', 'ETHUSDT']
     
-
-    
-
-    
-
     useEffect(() => {
-        const EtheurWebSocket = () => {
-            EtheurSocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/etheur@trade')
-            EtheurSocketRef.current.onmessage = (event) => {
-                if (event.data) {
-                    let response = JSON.parse(event.data)
-                    let currentPrice = parseFloat(response.p).toFixed(2)
+        SocketRef.current.onopen = () => {
+            pairs.forEach(pair => {
+                SocketRef.current.send(JSON.stringify({
+                    "method": "SUBSCRIBE",
+                    "params": [
+                        `${pair.toLowerCase()}@kline_30m`
+                    ],
+                    "id": 1
+                }))
+            })
+        }
+        SocketRef.current.onmessage = (event) => {
+            const response = JSON.parse(event.data)
+
+            if (response?.e) {
+                const currentPrice = parseFloat(response.k.c).toFixed(2)
+                if (response.s === "ETHUSDT") {
                     setEtheur(currentPrice)
                     if (currentPrice > etheur) {
                         setEtheurColor(true)
@@ -45,22 +54,9 @@ export const Dashboard = () => {
                     if (currentPrice < etheur) {
                         setEtheurColor(false)
                     }
-                    setEtheurData(prev => {
-                        if (prev.length >= 8) {
-                            return [...prev.slice(1), currentPrice]
-                        } else {
-                            return [...prev, currentPrice]
-                        }
-                    })
+
                 }
-            }
-        }
-        const BitcoinWebSocket = () => {
-            BitcoinSocketRef.current = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade')
-            BitcoinSocketRef.current.onmessage = (event) => {
-                if (event.data) {
-                    let response = JSON.parse(event.data)
-                    let currentPrice = parseFloat(response.p).toFixed(2)
+                if (response.s === "BTCUSDT") {
                     setBitcoin(currentPrice)
                     if (currentPrice > bitcoin) {
                         setBitcoinColor(true)
@@ -68,20 +64,26 @@ export const Dashboard = () => {
                     if (currentPrice < bitcoin) {
                         setBitcoinColor(false)
                     }
-                    setBitcoinData(prev => {
-                        if (prev.length >= 8) {
-                            return [...prev.slice(1), currentPrice]
-                        } else {
-                            return [...prev, currentPrice]
-                        }
-                    })
                 }
+                setKlineData((prev) => {
+                    if (prev[`${response.s}`].length >= 8) {
+                        return {
+                            ...prev,
+                            [`${response.s}`]: [...prev[`${response.s}`].slice(1), currentPrice]
+                        }
+                    } else {
+                        return {
+                            ...prev,
+                            [`${response.s}`]: [...prev[`${response.s}`], currentPrice]
+                        }
+                    }
+                }
+                )
             }
         }
-        EtheurWebSocket()
-        BitcoinWebSocket()
-    })
-    
+    }, [
+
+    ])
 
     return (
         <main className={styles.main}>
@@ -89,7 +91,7 @@ export const Dashboard = () => {
                 <section className={styles.Area__section}>
                     <div className={styles.Area__container}>
                         <div>
-                            <h2 className={styles._title}>Avarage Revenue</h2>
+                            <h2 className={styles._title}>Ethereum</h2>
                             <span style={{color: etheurColor === true ? 'green' : 'red'}} className={styles._current_price}>${etheur}</span>
                             <div className={styles.diagram__status}>
                                 <span className={styles._status}>icon 20%</span>
@@ -97,12 +99,12 @@ export const Dashboard = () => {
                             </div>
                         </div>
                         <div className={styles.diagram__container}>
-                            <AreaLine props={etheurData} />
+                            <AreaLine props={ klineData ? klineData['ETHUSDT'] : null} />
                         </div>
                     </div>
                     <div className={styles.Area__container}>
                         <div>
-                            <h2 className={styles._title}>Avarage Revenue</h2>
+                            <h2 className={styles._title}>Bitcoin</h2>
                             <span style={{ color: bitcoinColor === true ? 'green' : 'red' }} className={styles._current_price}>${bitcoin}</span>
                             <div className={styles.diagram__status}>
                                 <span className={styles._status}>icon 20%</span>
@@ -110,7 +112,7 @@ export const Dashboard = () => {
                             </div>
                         </div>
                         <div className={styles.diagram__container}>
-                            <AreaLine props={bitcoinData} />
+                            <AreaLine props={klineData ? klineData['BTCUSDT'] : null} />
                         </div>
                     </div>
                 </section>

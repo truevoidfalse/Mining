@@ -13,7 +13,6 @@ import {
 
 
 export const AreaLine = ({props, width, height}) => {
-    console.log(props)
     ChartJS.register(
         CategoryScale,
         LinearScale,
@@ -52,7 +51,7 @@ export const AreaLine = ({props, width, height}) => {
     };
 
     const data = {
-        labels: props.length ? props.map(el => el) : [],
+        labels: props ? props.map(el => el) : [],
         datasets: [
             {
                 fill: true,
