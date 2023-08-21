@@ -11,8 +11,8 @@ import {
     Legend,
 } from 'chart.js';
 
+export const AreaLine = ({ props, width, height }) => {
 
-export const AreaLine = ({props, width, height}) => {
     ChartJS.register(
         CategoryScale,
         LinearScale,

@@ -7,6 +7,7 @@ import axios from 'axios'
 
 import { AreaLine } from '../../UI/AreaLine/AreaLine';
 import { PieLine } from '../../UI/PieLine/PieLine';
+import { ChartLine } from '../../UI/ChartLine/ChartLine';
 
 
 
@@ -86,33 +87,8 @@ export const Dashboard = () => {
                 }
                 )
             }
-
-            const cryptoBitcoinFecthing = async () => {
-                const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=BTCUSDT')
-                setCryptoCount((prev) => {
-                    return {
-                        ...prev,
-                        BTCUSDT: data.bids.reduce((total, bid) => {
-                            return parseFloat(total) + parseFloat(bid[1])
-                        })
-                    }
-                })
-
-            }
-            const cryptoEtheurFecthing = async () => {
-                const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=ETHUSDT')
-                setCryptoCount((prev) => {
-                    return {
-                        ...prev,
-                        ETHUSDT: data.bids.reduce((total, bid) => {
-                            return parseFloat(total) + parseFloat(bid[1])
-                        })
-                    }
-                })
-
-            }
-            cryptoBitcoinFecthing()
-            cryptoEtheurFecthing()
+            
+            
             return () => {
                 SocketRef.current.close()
             }
@@ -120,6 +96,35 @@ export const Dashboard = () => {
     }, [
 
     ])
+
+    useEffect(() => {
+        const cryptoBitcoinFecthing = async () => {
+            const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=BTCUSDT')
+            setCryptoCount((prev) => {
+                return {
+                    ...prev,
+                    BTCUSDT: data.bids.reduce((total, bid) => {
+                        return parseFloat(total) + parseFloat(bid[1])
+                    })
+                }
+            })
+
+        }
+        const cryptoEtheurFecthing = async () => {
+            const { data } = await axios.get('https://api.binance.com/api/v3/depth?symbol=ETHUSDT')
+            setCryptoCount((prev) => {
+                return {
+                    ...prev,
+                    ETHUSDT: data.bids.reduce((total, bid) => {
+                        return parseFloat(total) + parseFloat(bid[1])
+                    })
+                }
+            })
+
+        }
+        cryptoBitcoinFecthing()
+        cryptoEtheurFecthing()
+    }, [])
 
     return (
         <main className={styles.main}>
@@ -150,6 +155,27 @@ export const Dashboard = () => {
                         <div className={styles.diagram__container}>
                             <AreaLine props={klineData ? klineData['BTCUSDT'] : null} />
                         </div>
+                    </div>
+                </section>
+                <section className={styles.Chart_section}>
+                    <div className={styles.ChartLine__container}>
+                        <div className={styles._header}>
+                            <h2 className={styles._title}>Bitcoin vs Ethereum</h2>
+                            <div className={styles._right_side}>
+                                <div className={styles._item}>
+                                    <span style={{backgroundColor: 'yellow'}} className={styles._circle}></span>
+                                    <h3>Bitcoin</h3>
+                                </div>
+                                <div className={styles._item}>
+                                    <span style={{backgroundColor: 'blue'}} className={styles._circle}></span>
+                                    <h3>Ethereum</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <ChartLine props={{
+                            ETHUSDT: [1566, 1788, 2234, 1235, 1556, 1256, 1567, 2155, 1566, 1766, 1456, 1897],
+                            BTCUSDT: [1466, 1288, 1234, 1635, 1356, 1456, 1367, 1655, 1266, 1866, 1656, 1397]
+                        }}  />
                     </div>
                 </section>
             </section>
